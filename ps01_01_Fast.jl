@@ -51,6 +51,15 @@ function main()
     nGridCapital = length(vGridCapital)
     nGridProductivity = length(vProductivity)
 
+    %% Plot of the profit function
+    labor(a,k)= (θ1*(k.^θ1)'*a/W).^(1/(1-θ2));
+    profit(a,k) = ((k'.^θ1)*a).*(labor(a,k).^θ2) - W*labor(a,k);
+    investment(a,k,kprime) = kprime - (1-δ)* k'*ones(size(a,1));
+    phi(a,k,kprime) = b0 * k'*ones(1,size(a,1)) + b1*( investment(a,k,kprime)./ ( k'*ones(1,size(a,1)) )- δ ).*( k'*ones(1,size(a,1)) ) ;
+
+    plot(vGridCapital, profit(abar,vGridCapital));
+
+
     # 3. Required matrices and vectors
 
     mOutput           = zeros(nGridCapital,nGridProductivity)
