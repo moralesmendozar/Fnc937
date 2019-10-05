@@ -12,52 +12,19 @@ clc
 tic
 
 %%  1. Calibration
-clear
-clc
 
-rho = 0.8;   % ar(1) parameter of log(a) (productivity)
-r = 0.02;    % 1/(1+r) discount rate of firm
-bbeta = 1/(1+r);   % Discount factor of the firm
-delta = 0.1; % depreciation
-theta1 = 0.3; % kapital elasticity (cobbdouglas)
-aalpha =theta1;     % Elasticity of output w.r.t. capital
-theta2 = 0.6; % labor elasticity (cobbdouglas)
-W = 2;   % wage
-sigma = 0.1;  % std dev of eps (ar(1)) of log(a) (productivity)
-abar = 1; % log(abar) is the mean of log(a), which is ar(1)
-b0 = 1;
-b1 = 0.5;
+aalpha = 1/3;     % Elasticity of output w.r.t. capital
+bbeta  = 0.95;    % Discount factor
 
 % Productivity values
-na = 9;  %number of points for logaGrid = [loga0, loga1... loga9]
-logabar = log(abar);
-deltaLoga = 0.3;  %change between each log(a);
-
-vProductivity = (logabar - deltaLoga*floor(na/2)):deltaLoga:(logabar + deltaLoga*floor(na/2));
+vProductivity = [0.9792; 0.9896; 1.0000; 1.0106; 1.0212]';
 
 % Transition matrix
-P   = eye(na);
-a_1 = vProductivity(1);
-a_n = vProductivity(na);
-for j = 1:na
-    aj = vProductivity(j);
-    upperBoundA = (a_1 - rho*aj - (1-rho)*abar +deltaLoga/2)/sigma;
-    P(1,j) = normcdf(upperBoundA);
-    lowerboundA = (a_n - rho*aj - (1-rho)*abar -deltaLoga/2)/sigma;
-    P(na,j) = 1-normcdf(lowerboundA);
-end
-for i = 2:(na-1)
-    for j = 1:(na)
-        ai = vProductivity(i);
-        aj = vProductivity(j);
-        upperBoundA = (ai - rho*aj - (1-rho)*abar +deltaLoga/2)/sigma;
-        lowerboundA = (ai - rho*aj - (1-rho)*abar -deltaLoga/2)/sigma;
-        P(i,j) = normcdf(upperBoundA)-normcdf(lowerboundA);
-    end
-end
-P'
-mTransition   = P;
-
+mTransition   = [0.9727, 0.0273, 0.0000, 0.0000, 0.0000;
+                 0.0041, 0.9806, 0.0153, 0.0000, 0.0000;
+                 0.0000, 0.0082, 0.9837, 0.0082, 0.0000;
+                 0.0000, 0.0000, 0.0153, 0.9806, 0.0041;
+                 0.0000, 0.0000, 0.0000, 0.0273, 0.9727];
 
 %% 2. Steady State
 
@@ -69,24 +36,10 @@ fprintf(' Output = %2.6f, Capital = %2.6f, Consumption = %2.6f\n', outputSteadyS
 fprintf('\n')
 
 % We generate the grid of capital
-capMiddle = (aalpha*abar/(r+delta))^(1/(1-aalpha));
-kstep = 0.01; %0.00001
-%vGridCapital = 0.5*capitalSteadyState:kstep:1.5*capitalSteadyState;
-vGridCapital = 0.5*capMiddle:kstep:1.5*capMiddle;
-%kapitalMax = (abar/(delta))^(1/(1-aalpha));
-%vGridCapital = 0:kstep:kapitalMax;
-
+vGridCapital = 0.5*capitalSteadyState:0.00001:1.5*capitalSteadyState;
 
 nGridCapital = length(vGridCapital);
 nGridProductivity = length(vProductivity);
-
-%% Plot of the profit function
-labor = @(a,k) (theta1*(k.^theta1)'*a/W).^(1/(1-theta2));
-profit = @(a,k) ((k'.^theta1)*a).*(labor(a,k).^theta2) - W*labor(a,k);
-investment = @(a,k,kprime) kprime - (1-delta)* k'*ones(size(a,1));
-phi = @(a,k,kprime) b0 * k'*ones(size(a,1)) + b1*(( investment(a,k,kprime)./ ( k'*ones(size(a,1)) )- delta ).^2).*( k'*ones(size(a,1)) ) ;
-
-plot(vGridCapital, profit(abar,vGridCapital));
 
 %% 3. Required matrices and vectors
 
@@ -98,7 +51,7 @@ expectedValueFunction = zeros(nGridCapital,nGridProductivity);
 
 %% 4. We pre-build output for each point in the grid
 
-profitMatrix = profit(exp(vProductivity),vGridCapital);
+mOutput = (vGridCapital'.^aalpha)*vProductivity;
 
 %% 5. Main iteration
 
@@ -122,12 +75,8 @@ while (maxDifference>tolerance)
             
             for nCapitalNextPeriod = gridCapitalNextPeriod:nGridCapital
                 
-                %consumption = mOutput(nCapital,nProductivity)-vGridCapital(nCapitalNextPeriod);
-                prodctvt = exp(vProductivity(nProductivity));
-                currentCapital = vGridCapital(nCapital);
-                kprimeTomorow = vGridCapital(nCapitalNextPeriod);
-                dividend = profitMatrix(nCapital,nProductivity) - investment(prodctvt,currentCapital,kprimeTomorow) - phi(prodctvt,currentCapital,kprimeTomorow);
-                valueProvisional = (1-bbeta)*dividend+bbeta*expectedValueFunction(nCapitalNextPeriod,nProductivity);
+                consumption = mOutput(nCapital,nProductivity)-vGridCapital(nCapitalNextPeriod);
+                valueProvisional = (1-bbeta)*log(consumption)+bbeta*expectedValueFunction(nCapitalNextPeriod,nProductivity);
             
                 if (valueProvisional>valueHighSoFar)
                     valueHighSoFar = valueProvisional;
@@ -158,7 +107,8 @@ end
 
 fprintf(' Iteration = %d, Sup Diff = %2.8f\n', iteration, maxDifference); 
 fprintf('\n')
-%fprintf(' My check = %2.6f\n', mPolicyFunction(1000,3));
+
+fprintf(' My check = %2.6f\n', mPolicyFunction(1000,3)); 
 fprintf('\n')
 
 toc
@@ -170,13 +120,11 @@ figure(1)
 subplot(3,1,1)
 plot(vGridCapital,mValueFunction)
 xlim([vGridCapital(1) vGridCapital(nGridCapital)])
-xlabel('k')
 title('Value Function')
 
 subplot(3,1,2)
 plot(vGridCapital,mPolicyFunction)
 xlim([vGridCapital(1) vGridCapital(nGridCapital)])
-xlabel('k')
 title('Policy Function')
 
 vExactPolicyFunction = aalpha*bbeta.*(vGridCapital.^aalpha);

@@ -7,6 +7,8 @@
 # Redefine log
 #mylog(x::Float64)  = ccall((:log, :libm), Float64, (Float64,), x)
 #include("/home/moralesmendozar/Dropbox/03_UPenn/classes/2019_fall/01_937-/PS01/ps01_01_Fast.jl")
+#using(Pkg)
+#using PyPlot
 mylog(x::Float64)  = ccall((:log, :libopenlibm), Float64, (Float64,), x)
 
 function main()
@@ -15,15 +17,15 @@ function main()
 
     α = 1/3     # Elasticity of output w.r.t. capital
 
-    ρ = 0.8;   % ar(1) parameter of log(a) (productivity)
-    r = 0.02;    % 1/(1+r) discount rate of firm
-    β = 1/(1+r);   % Discount factor of the firm
-    δ = 0.1; % depreciation
-    θ1 = 0.3; % kapital elasticity (cobbdouglas)
-    θ2 = 0.6; % labor elasticity (cobbdouglas)
-    W =2;   % wage
-    σ = 0.1;  % std dev of eps (ar(1)) of log(a) (productivity)
-    abar = 1; % log(abar) is the mean of log(a), which is ar(1)
+    ρ = 0.8;   # ar(1) parameter of log(a) (productivity)
+    r = 0.02;    # 1/(1+r) discount rate of firm
+    β = 1/(1+r);   # Discount factor of the firm
+    δ = 0.1; # depreciation
+    θ1 = 0.3; # kapital elasticity (cobbdouglas)
+    θ2 = 0.6; # labor elasticity (cobbdouglas)
+    W =2;   # wage
+    σ = 0.1;  # std dev of eps (ar(1)) of log(a) (productivity)
+    abar = 1; # log(abar) is the mean of log(a), which is ar(1)
     b0 = 1;
     b1 = 0.5;
 
@@ -51,12 +53,13 @@ function main()
     nGridCapital = length(vGridCapital)
     nGridProductivity = length(vProductivity)
 
-    %% Plot of the profit function
+    # Plot of the profit function
     labor(a,k)= (θ1*(k.^θ1)'*a/W).^(1/(1-θ2));
     profit(a,k) = ((k'.^θ1)*a).*(labor(a,k).^θ2) - W*labor(a,k);
-    investment(a,k,kprime) = kprime - (1-δ)* k'*ones(size(a,1));
+    investment(a,k,kprime) = kprime*ones(length(k),length(a)) - (1-δ)* k'*ones(size(a,1));
     phi(a,k,kprime) = b0 * k'*ones(1,size(a,1)) + b1*( investment(a,k,kprime)./ ( k'*ones(1,size(a,1)) )- δ ).*( k'*ones(1,size(a,1)) ) ;
-
+    size(vGridCapital)
+    size(profit(abar,vGridCapital))
     plot(vGridCapital, profit(abar,vGridCapital));
 
 
