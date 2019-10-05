@@ -88,7 +88,7 @@ vGridCapital = 0.5*capMiddle:kstep:1.5*capMiddle;
 kapitalMax = (abar/(delta))^(1/(1-aalpha));
 vGridCapital = (0):kstep:(0.6*kapitalMax);
 vGridCapital = (0):kstep:(capitalSteadyState);
-vGridCapital = linspace(0.01*capitalSteadyState,capitalSteadyState,400);
+vGridCapital = linspace(0.01*capitalSteadyState,capitalSteadyState,50);
 
 
 
@@ -150,7 +150,7 @@ while (maxDifference>tolerance)
                     capitalChoice = vGridCapital(nCapitalNextPeriod);
                     gridCapitalNextPeriod = nCapitalNextPeriod;
                 else
-                    break; % We break when we have achieved the max
+                %    break; % We break when we have achieved the max
                 end    
                   
             end
@@ -236,7 +236,7 @@ legend('high a', 'middle a', 'low a')
 hold off
 
 subplot(2,1,2)
-plot(xkap,mFinancing(1:200,8))
+plot(xkap,mFinancing(1:nGridCapital/2,8))
 xlabel('k')
 title('Financing (-d(a,k) when positive)')
 hold on
