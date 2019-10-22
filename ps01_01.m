@@ -29,7 +29,7 @@ aalpha =theta1;     % Elasticity of output w.r.t. capital
 theta2 = 0.6; % labor elasticity (cobbdouglas)
 W = 2;   % wage
 sigma = 0.1;  % std dev of eps (ar(1)) of log(a) (productivity)
-abar = 3.1; % log(abar) is the mean of log(a), which is ar(1)
+abar = 1.5; % log(abar) is the mean of log(a), which is ar(1)
 b0 = 0;    %parameter0 for cots of investing
 b1 = 0.5;   %parameter1 for cots of investing
 options = optimset('Display', 'off');  %when solves for kss
@@ -67,7 +67,7 @@ mTransition   = P;
 
 % 2. Steady State
 %define the functions of labor, profit and investment...
-labor = @(a,k) (theta1*(k.^theta1)'*a/W).^(1/(1-theta2));
+labor = @(a,k) (theta2*(k.^theta1)'*a/W).^(1/(1-theta2));
 profit = @(a,k) ((k'.^theta1)*a).*(labor(a,k).^theta2) - W*labor(a,k);
 investment = @(a,k,kprime) kprime - (1-delta)* k'*ones(size(a,1));
 phi = @(a,k,kprime) b0 * k'*ones(1,size(a,1)) + b1*(( investment(a,k,kprime)./ ( k'*ones(1,size(a,1)) )- delta).^2).*k'*ones(1,size(a,1));
@@ -88,7 +88,7 @@ vGridCapital = 0.5*capMiddle:kstep:1.5*capMiddle;
 kapitalMax = (abar/(delta))^(1/(1-aalpha));
 vGridCapital = (0):kstep:(0.6*kapitalMax);
 vGridCapital = (0):kstep:(capitalSteadyState);
-vGridCapital = linspace(0.01*capitalSteadyState,capitalSteadyState,50);
+vGridCapital = linspace(0.01*capitalSteadyState,capitalSteadyState,200);
 
 
 
@@ -150,7 +150,7 @@ while (maxDifference>tolerance)
                     capitalChoice = vGridCapital(nCapitalNextPeriod);
                     gridCapitalNextPeriod = nCapitalNextPeriod;
                 else
-                %    break; % We break when we have achieved the max
+                    break; % We break when we have achieved the max
                 end    
                   
             end
@@ -242,5 +242,15 @@ title('Financing (-d(a,k) when positive)')
 hold on
 plot(xkap,mFinancing(1:nGridCapital/2,5))
 plot(xkap,mFinancing(1:nGridCapital/2,1))
+legend('high a', 'middle a', 'low a')
+hold off
+
+figure(4)
+plot(xkap,mOptimalInvestment(1:nGridCapital/2,8))
+xlabel('k')
+title('Optimal Invesment')
+hold on
+plot(xkap,mOptimalInvestment(1:nGridCapital/2,5))
+plot(xkap,mOptimalInvestment(1:nGridCapital/2,1))
 legend('high a', 'middle a', 'low a')
 hold off
